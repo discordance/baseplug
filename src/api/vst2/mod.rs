@@ -88,20 +88,6 @@ impl OutgoingEvents {
             event_ptrs: evts_ptrs,
         }
     }
-
-    pub fn clear(&mut self) {
-        // reset data
-        self.events = [Event {
-            event_type: EventType::Midi,
-            byte_size: std::mem::size_of::<MidiEvent>() as i32,
-            delta_frames: 0,
-            _flags: 0,
-            _reserved: [0; 16],
-        }; 256];
-
-        // reset count
-        self.num_events = 0;
-    }
 }
 
 struct VST2Adapter<P: Plugin> {
@@ -297,21 +283,21 @@ impl<P: Plugin> VST2Adapter<P> {
                     CStr::from_ptr(ptr as *mut c_char).to_bytes()
                 })
                 .into_owned();
-                
+
                 let can_do = match can_do.as_str() {
                     "sendVstEvents" => Supported::Yes,
                     "sendVstMidiEvent" => Supported::Yes,
                     // "receiveVstEvents" => Supported::Maybe,
                     // "receiveVstMidiEvent" => Supported::Maybe,
-                    // "receiveVstTimeInfo" => ReceiveTimeInfo,
+                    "receiveVstTimeInfo" => Supported::Yes,
                     // "offline" => Offline,
                     // "midiProgramNames" => MidiProgramNames,
                     // "bypass" => Bypass,
-        
+
                     // "receiveVstSysexEvent" => ReceiveSysExEvent,
                     // "midiSingleNoteTuningChange" => MidiSingleNoteTuningChange,
                     // "midiKeyBasedInstrumentControl" => MidiKeyBasedInstrumentControl,
-                    otherwise => Supported::Maybe
+                    otherwise => Supported::Maybe,
                 };
 
                 return can_do.into();
