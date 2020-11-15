@@ -28,8 +28,8 @@ const OUTPUT_BUFFER_SIZE: usize = 256;
 
 #[inline]
 fn cstr_as_slice<'a>(ptr: *mut c_void, len: usize) -> &'a mut [u8] {
-    unsafe { 
-        slice::from_raw_parts_mut(ptr as *mut u8, len) 
+    unsafe {
+        slice::from_raw_parts_mut(ptr as *mut u8, len)
     }
 }
 
@@ -115,11 +115,10 @@ impl<P: Plugin> VST2Adapter<P> {
             ////
             // lifecycle
             ////
-
             OpCode::GetApiVersion => return 2400,
             OpCode::Shutdown => {
-                unsafe { 
-                    drop(Box::from_raw(self)) 
+                unsafe {
+                    drop(Box::from_raw(self))
                 };
             },
 
@@ -198,18 +197,16 @@ impl<P: Plugin> VST2Adapter<P> {
             ////
             OpCode::ProcessEvents => unsafe {
                 let vst_events = &*(ptr as *const Events);
-                let ev_slice =
-                    slice::from_raw_parts(
+                let ev_slice = slice::from_raw_parts(
                         &vst_events.events[0], 
-                        
                         vst_events.num_events as usize
-                    );
+                );
 
                 for ev in ev_slice {
                     if let EventType::Midi = (**ev).event_type {
                         let ev = *ev as *const vst::api::MidiEvent;
                         self.wrapped.midi_input(
-                            (*ev).delta_frames as usize, 
+                            (*ev).delta_frames as usize,
                             (*ev).midi_data
                         );
                     }
@@ -228,7 +225,7 @@ impl<P: Plugin> VST2Adapter<P> {
                 };
 
                 unsafe {
-                    *(ptr as *mut *const c_void) = 
+                    *(ptr as *mut *const c_void) =
                         new_state.as_ptr() as *const c_void;
                 }
 
@@ -238,8 +235,8 @@ impl<P: Plugin> VST2Adapter<P> {
             },
 
             OpCode::SetData => {
-                let state = unsafe { 
-                    slice::from_raw_parts(ptr as *mut u8, value as usize) 
+                let state = unsafe {
+                    slice::from_raw_parts(ptr as *mut u8, value as usize)
                 };
 
                 self.wrapped.deserialise(state);
@@ -249,7 +246,6 @@ impl<P: Plugin> VST2Adapter<P> {
             ////
             // editor
             ////
-
             OpCode::EditorGetRect => {
                 let ptr = ptr as *mut *mut c_void;
 
@@ -364,7 +360,6 @@ impl<P: Plugin> VST2Adapter<P> {
 
             let vti = (self.host_cb)(&mut self.effect,
                 host::OpCode::GetTime as i32, 0,
-                
                 flags.bits() as isize,
                 ptr::null_mut(), 0.0);
 
@@ -393,17 +388,15 @@ impl<P: Plugin> VST2Adapter<P> {
 
     #[inline]
     fn process_replacing(&mut self,
-
         in_buffers: *const *const f32,
         out_buffers: *mut *mut f32,
-        nframes: i32) 
+        nframes: i32)
     {
         let input = unsafe {
             let b = slice::from_raw_parts(in_buffers, 2);
 
             [slice::from_raw_parts(b[0], nframes as usize),
              slice::from_raw_parts(b[1], nframes as usize)]
-
         };
 
         let output = unsafe {
@@ -411,7 +404,6 @@ impl<P: Plugin> VST2Adapter<P> {
 
             [slice::from_raw_parts_mut(b[0], nframes as usize),
              slice::from_raw_parts_mut(b[1], nframes as usize)]
-
         };
 
         let musical_time = self.get_musical_time();
