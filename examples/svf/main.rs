@@ -9,7 +9,8 @@ use svf_simper::SVFSimper;
 
 use baseplug::{
     Plugin,
-    ProcessContext
+    ProcessContext,
+    SharedContext
 };
 
 
@@ -35,6 +36,15 @@ impl Default for SVFModel {
     }
 }
 
+// shared context for plugin and UI to communicate
+struct SVFPluginSharedContext {}
+
+impl SharedContext<SVFPlugin> for SVFPluginSharedContext {
+    fn new() -> Self {
+        Self {}
+    }
+}
+
 struct SVFPlugin {
     lpf: SVFSimper
 }
@@ -48,16 +58,17 @@ impl Plugin for SVFPlugin {
     const OUTPUT_CHANNELS: usize = 2;
 
     type Model = SVFModel;
+    type SharedContext = SVFPluginSharedContext;
 
     #[inline]
-    fn new(sample_rate: f32, model: &SVFModel) -> Self {
+    fn new(sample_rate: f32, model: &SVFModel, _shared_ctx: &mut SVFPluginSharedContext) -> Self {
         Self {
             lpf: SVFSimper::new(model.cutoff, model.resonance, sample_rate)
         }
     }
 
     #[inline]
-    fn process(&mut self, model: &SVFModelProcess, ctx: &mut ProcessContext<Self>) {
+    fn process(&mut self, model: &SVFModelProcess, ctx: &mut ProcessContext<Self>, shared_ctx: &mut SVFPluginSharedContext ) {
         let input = &ctx.inputs[0].buffers;
         let output = &mut ctx.outputs[0].buffers;
 

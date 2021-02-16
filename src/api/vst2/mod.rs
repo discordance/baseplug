@@ -282,21 +282,8 @@ impl<P: Plugin> VST2Adapter<P> {
                 self.ui_close();
             },
 
-            OpCode::CanDo => {
-                // get the property
-                let can_do = String::from_utf8_lossy(unsafe {
-                    CStr::from_ptr(ptr as *mut c_char).to_bytes()
-                })
-                .into_owned();
+            OpCode::EditorIdle => {
 
-                let can_do = match can_do.as_str() {
-                    "sendVstEvents" => Supported::Yes,
-                    "sendVstMidiEvent" => Supported::Yes,
-                    "receiveVstTimeInfo" => Supported::Yes,
-                    _otherwise => Supported::Maybe,
-                };
-
-                return can_do.into();
             },
 
             OpCode::CanDo => {

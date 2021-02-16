@@ -8,6 +8,7 @@ use serde::{Serialize, Deserialize};
 
 use baseplug::{
     ProcessContext,
+    SharedContext,
     Plugin,
     MidiReceiver,
     util::db_to_coeff
@@ -39,6 +40,15 @@ impl Default for MidiSineModel {
             pd: 0.5,
             a4: 440.0
         }
+    }
+}
+
+// shared context for plugin and UI to communicate
+struct MidiSineSharedContext {}
+
+impl SharedContext<MidiSine> for MidiSineSharedContext {
+    fn new() -> Self {
+        Self {}
     }
 }
 
@@ -103,9 +113,10 @@ impl Plugin for MidiSine {
     const OUTPUT_CHANNELS: usize = 2;
 
     type Model = MidiSineModel;
+    type SharedContext = MidiSineSharedContext;
 
     #[inline]
-    fn new(sample_rate: f32, _model: &MidiSineModel) -> Self {
+    fn new(sample_rate: f32, _model: &MidiSineModel, _shared_ctx: &mut MidiSineSharedContext) -> Self {
         Self {
             osc: Oscillator::new(),
             sample_rate,
@@ -115,7 +126,7 @@ impl Plugin for MidiSine {
     }
 
     #[inline]
-    fn process(&mut self, model: &MidiSineModelProcess, ctx: &mut ProcessContext<Self>) {
+    fn process(&mut self, model: &MidiSineModelProcess, ctx: &mut ProcessContext<Self>, _shared_ctx: &mut MidiSineSharedContext) {
         let output = &mut ctx.outputs[0].buffers;
 
         for i in 0..ctx.nframes {

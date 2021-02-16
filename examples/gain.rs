@@ -6,6 +6,7 @@ use serde::{Serialize, Deserialize};
 use baseplug::{
     ProcessContext,
     Plugin,
+    SharedContext
 };
 
 
@@ -30,6 +31,16 @@ impl Default for GainModel {
     }
 }
 
+// shared context for plugin and UI to communicate
+struct GainSharedContext {
+}
+
+impl SharedContext<Gain> for GainSharedContext {
+    fn new() -> Self {
+        Self {}
+    }
+}
+
 struct Gain;
 
 impl Plugin for Gain {
@@ -41,14 +52,15 @@ impl Plugin for Gain {
     const OUTPUT_CHANNELS: usize = 2;
 
     type Model = GainModel;
+    type SharedContext = GainSharedContext;
 
     #[inline]
-    fn new(_sample_rate: f32, _model: &GainModel) -> Self {
+    fn new(_sample_rate: f32, _model: &GainModel, _shared_ctx: &mut GainSharedContext) -> Self {
         Self
     }
 
     #[inline]
-    fn process(&mut self, model: &GainModelProcess, ctx: &mut ProcessContext<Self>) {
+    fn process(&mut self, model: &GainModelProcess, ctx: &mut ProcessContext<Self>, _shared_ctx: &mut GainSharedContext) {
         let input = &ctx.inputs[0].buffers;
         let output = &mut ctx.outputs[0].buffers;
 

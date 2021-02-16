@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use baseplug::{event::Data, Event, Plugin, ProcessContext};
+use baseplug::{event::Data, Event, Plugin, SharedContext, ProcessContext};
 
 baseplug::model! {
     #[derive(Debug, Serialize, Deserialize)]
@@ -18,6 +18,15 @@ baseplug::model! {
 impl Default for MidiOutMetronomeModel {
     fn default() -> Self {
         Self { len: 1.0 }
+    }
+}
+
+// shared context for plugin and UI to communicate
+struct MidiOutMetronomeSharedContext {}
+
+impl SharedContext<MidiOutMetronome> for MidiOutMetronomeSharedContext {
+    fn new() -> Self {
+        Self {}
     }
 }
 
@@ -36,8 +45,9 @@ impl Plugin for MidiOutMetronome {
     const OUTPUT_CHANNELS: usize = 2;
 
     type Model = MidiOutMetronomeModel;
+    type SharedContext = MidiOutMetronomeSharedContext;
 
-    fn new(_sample_rate: f32, _model: &Self::Model) -> Self {
+    fn new(_sample_rate: f32, _model: &Self::Model, _shared_ctx: &mut MidiOutMetronomeSharedContext) -> Self {
         Self {
             note_on: false,
             on_ct: 0,
@@ -46,7 +56,7 @@ impl Plugin for MidiOutMetronome {
     }
 
     fn process<'proc>(&mut self, model: &MidiOutMetronomeModelProcess,
-        ctx: &'proc mut ProcessContext<Self>)
+        ctx: &'proc mut ProcessContext<Self>, _shared_ctx: &mut MidiOutMetronomeSharedContext)
     {
         let output = &mut ctx.outputs[0].buffers;
         let enqueue_midi = &mut ctx.enqueue_event;

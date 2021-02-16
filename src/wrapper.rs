@@ -1,20 +1,4 @@
-use crate::{
-    Model,
-    SmoothModel,
-
-    Plugin,
-    PluginUI,
-    MidiReceiver,
-    Param,
-
-    AudioBus,
-    AudioBusMut,
-    ProcessContext,
-    MusicalTime,
-
-    Event,
-    event
-};
+use crate::{AudioBus, AudioBusMut, Event, MidiReceiver, Model, MusicalTime, Param, Plugin, PluginUI, ProcessContext, SharedContext, SmoothModel, event};
 
 pub(crate) struct WrappedPlugin<P: Plugin> {
     pub(crate) plug: P,
@@ -37,21 +21,27 @@ pub(crate) struct WrappedPlugin<P: Plugin> {
     pub(crate) smoothed_model: <P::Model as Model<P>>::Smooth,
     sample_rate: f32,
 
-    pub(crate) ui_handle: Option<<Self as WrappedPluginUI<P>>::UIHandle>
+    pub(crate) ui_handle: Option<<Self as WrappedPluginUI<P>>::UIHandle>,
+
+    // shared context used to share data between Plugin and UI
+    pub(crate) shared_context: P::SharedContext
 }
 
 impl<P: Plugin> WrappedPlugin<P> {
     #[inline]
     pub(crate) fn new() -> Self {
+        let mut shared = P::SharedContext::new();
         Self {
-            plug: P::new(48000.0, &P::Model::default()),
+            plug: P::new(48000.0, &P::Model::default(), &mut shared),
             events: Vec::with_capacity(512),
             output_events: Vec::with_capacity(256),
             smoothed_model:
                 <P::Model as Model<P>>::Smooth::from_model(P::Model::default()),
             sample_rate: 0.0,
 
-            ui_handle: None
+            ui_handle: None,
+
+            shared_context: shared
         }
     }
 
@@ -70,7 +60,7 @@ impl<P: Plugin> WrappedPlugin<P> {
     #[inline]
     pub(crate) fn reset(&mut self) {
         let model = self.smoothed_model.as_model();
-        self.plug = P::new(self.sample_rate, &model);
+        self.plug = P::new(self.sample_rate, &model, &mut self.shared_context);
         self.smoothed_model.reset(&model);
     }
 
@@ -242,7 +232,7 @@ impl<P: Plugin> WrappedPlugin<P> {
                 };
 
                 let proc_model = self.smoothed_model.process(block_frames);
-                self.plug.process(&proc_model, &mut context);
+                self.plug.process(&proc_model, &mut context, &mut self.shared_context);
             }
 
             nframes -= block_frames;
