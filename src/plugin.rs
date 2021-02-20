@@ -46,7 +46,7 @@ macro_rules! proc_model {
 
 /// A shared mutable context that have the life span of the wrapper. 
 /// Allows Plugins and UI to safely share data.
-pub trait SharedContext<P: Plugin>: Send + Sync + 'static {
+pub trait SharedContext<P: Plugin>: Sync + 'static {
     fn new() -> Self;
 }
 
@@ -60,7 +60,7 @@ pub trait Plugin: Sized + Send + Sync + 'static {
 
     type Model: Model<Self> + Serialize + DeserializeOwned;
 
-    type SharedContext : SharedContext<Self> + Send + Sync;
+    type SharedContext : SharedContext<Self>;
 
     fn new(sample_rate: f32, model: &Self::Model, shared_ctx: &mut Self::SharedContext) -> Self;
 
@@ -82,7 +82,7 @@ pub trait PluginUI: Plugin {
 
     fn ui_size() -> (i16, i16);
 
-    fn ui_open(parent: &impl HasRawWindowHandle, shared_ctx: &mut Self::SharedContext) -> WindowOpenResult<Self::Handle>;
+    fn ui_open(parent: &impl HasRawWindowHandle, shared_ctx: &Self::SharedContext) -> WindowOpenResult<Self::Handle>;
     fn ui_close(handle: Self::Handle);
 
     fn ui_param_notify(handle: &Self::Handle,
